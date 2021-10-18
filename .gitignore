@@ -1,3 +1,4 @@
 *.csv
 *.dta
 *.log
+*.DS_Store
