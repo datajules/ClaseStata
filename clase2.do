@@ -18,6 +18,7 @@ display sum(1, 2, 3, 4, 5)
 display strlen("Hola")
 display substr("hola", 1, 2)
 display strupper("hola")
+display string(1,"%03.0f")
 }
 
 ********************************* -7. Comandos- ********************************
@@ -101,8 +102,8 @@ egen prueba_tot2 = rowtotal(prueba1 prueba2)
 ******************************** -10. for loop- ********************************
 {
 
-foreach i in 1 2 3 {
-display `i' 
+foreach municipio in 1 2 3 {
+	display `municipio' + 5
 }
 
 local algunosNums 1 2 3 4 5
@@ -149,7 +150,85 @@ display "`prueba'"
 
 gen cve_mun =  ENTIDAD + MUN
 
+* Primero abres base1
+use "archivobase1.dta"  ,	 clear
+sort clave
+save "archivobase1_or.dta", replace
 
+* ABres base 2
+use "archivobase2.dta"  ,	 clear
+sort clave
+save "archivobase2_or.dta", replace
+* Abres base 3
+use "archivobase3.dta"  ,	 clear
+sort clave
+
+* Pegamos las bases
+merge clave using "archivobase1_or.dta"
+
+tab _merge
+
+drop _merge
+
+sort clave
+
+merge clave using "archivobase2.dta"
+
+
+destring P_3YMAS, replace force
+destring P12A14NOAF , replace force
+
+global salida " -  - "
+global salida $salida "Municipio - VIVTOT - P_3YMAS"
+levelsof NOM_MUN, local(municipios)
+foreach i in `municipios' {
+	* Viviendas totales
+	display "Para el municipio `i'"
+	total VIVTOT if NOM_MUN == "`i'"
+	matrix b = e(b)
+    local total1 = b[1,1]
+	* Poblacion 3 años y mas
+	total P_3YMAS if NOM_MUN == "`i'"
+		matrix b = e(b)
+    local total2 = b[1,1]
+	global salida $salida "`i' - `total1' - `total2'"
+}
+
+foreach i of global salida {
+ display "`i'"
+}
+
+
+
+
+
+levelsof NOM_MUN, local(municipios)
+foreach i in `municipios' {
+	* Viviendas totales
+	display "Para el municipio `i'"
+	total VIVTOT if NOM_MUN == "`i'"
+	matrix b = e(b)
+    local total1 = b[1,1]
+	* Poblacion 3 años y mas
+	total P_3YMAS if NOM_MUN == "`i'"
+		matrix b = e(b)
+    local total2 = b[1,1]
+	* Población femenina de 12 a 14 años que no asiste a la escuela
+	total P12A14NOAF  if NOM_MUN == "`i'"
+			matrix b = e(b)
+    local total3 = b[1,1]
+	global salida $salida "`i'" "Numero de viviendad" "`total1'" "Población de 3 o más" "`total2'"  "Población femenina de 12 a 14 años que no asiste a la escuela" "`total3'"  "--------------------------"
+}
+
+foreach i of global salida {
+ display "`i'"
+}
+
+
+
+
+
+* El merge 3 son los estaban en ambas bases
 
 } 
 
